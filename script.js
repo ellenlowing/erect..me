@@ -33,6 +33,7 @@ function setup() {
 function draw() {
   background(255);
   if(!peachTouched) {
+    textSize(60);
     text("🍑",width/2,height/2);
   } else if (peachTouched){
     noFill();
@@ -57,6 +58,7 @@ function draw() {
         translate(0, -202);
         cumPos.x += map(noise(frameCount*0.01), 0, 1, -0.5, 0.5);
         cumPos.y += ay*0.2;
+        textSize(20);
         for(let i = 0; i < floor(cumVolume); i++) {
           let cumposx = map(noise(i*0.05,flying), 0, 1, 0, width-100);
           text("💦", cumposx, cumPos.y-i*20);
