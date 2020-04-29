@@ -1,7 +1,12 @@
 let peachTouched = false;
+let theyCame = false;
+let theyCameTime = -1;
+let cumVolume = 1;
+let cumPos = {x: 200, y: -5};
 let accel = {x: 0, y: 0, z: 0};
 let progress = 0;
 let pts = [];
+let flying = 0;
 
 function preload() {
   tfont = loadFont('assets/font/Mabry Pro.otf');
@@ -20,31 +25,47 @@ function setup() {
     [{x: 98, y: 300}, {x: 172, y: 214}, {x: 249, y: 192}, {x: 358, y:197}],
     [{x: 73, y: 242}, {x: 173, y: 192}, {x: 274, y: 184}, {x: 358, y:200}],
     [{x: 70, y: 134}, {x: 136, y: 177}, {x: 250, y: 188}, {x: 358, y:197}],
-    [{x: 121, y: 24}, {x: 177, y: 136}, {x: 256, y: 183}, {x: 358, y:197}]
+    [{x: 121, y: 50}, {x: 177, y: 136}, {x: 256, y: 183}, {x: 358, y:197}]
   ];
+  cumPos = {x:width/2, y:-20};
 }
 
 function draw() {
   background(255);
   if(!peachTouched) {
     text("🍑",width/2,height/2);
-  } else {
+  } else if (peachTouched){
     noFill();
-    // progress+=0.01;
-    let newpt = lerpPenis(progress);
-    bezier(newpt[0].x, newpt[0].y,
-         newpt[1].x, newpt[1].y,
-         newpt[2].x, newpt[2].y,
-         newpt[3].x, newpt[3].y);
     let ax = abs(precise(accel.x,3));
     let ay = abs(precise(accel.y,3));
     let az = abs(precise(accel.z,3));
     if((ax+ay) > 10) {
       progress += 0.05;
-      // text('shaken', width/2, height/2 - 40);
+    }
+    let newpt = lerpPenis(progress);
+    translate(0, 202);
+    bezier(newpt[0].x, newpt[0].y,
+         newpt[1].x, newpt[1].y,
+         newpt[2].x, newpt[2].y,
+         newpt[3].x, newpt[3].y);
+    if(theyCame) {
+      if(millis()-theyCameTime < 2000) {
+        if((ax+ay) > 10) {
+          cumVolume+=0.5;
+        }
+      } else {
+        translate(0, -202);
+        cumPos.x += map(noise(frameCount*0.01), 0, 1, -0.5, 0.5);
+        cumPos.y += ay*0.2;
+        for(let i = 0; i < floor(cumVolume); i++) {
+          let cumposx = map(noise(i*0.05,flying), 0, 1, 0, width-100);
+          text("💦", cumposx, cumPos.y-i*20);
+        }
+      }
+
     }
   }
-
+  flying-=0.001;
 }
 
 function touchEnded() {
@@ -55,6 +76,11 @@ function touchEnded() {
 }
 
 function lerpPenis(hardness) {
+  hardness = constrain(hardness, 0, pts.length+2);
+  if(hardness == pts.length+2 && !theyCame) {
+    theyCame = true;
+    theyCameTime = millis();
+  }
   let lowidx = constrain(floor(hardness),0,pts.length-2);
   let highidx = lowidx+1;
   let lowpt = pts[lowidx];
@@ -95,13 +121,13 @@ function deviceMotionHandler(eventData) {
   var info, xyz = "[X, Y, Z]";
 
   // Grab the acceleration from the results
-  var acceleration = eventData.acceleration;
-  if(acceleration) {
-    info = xyz.replace("X", acceleration.x);
-    info = info.replace("Y", acceleration.y);
-    info = info.replace("Z", acceleration.z);
-    document.getElementById("moAccel").innerHTML = info;
-  }
+  // var acceleration = eventData.acceleration;
+  // if(acceleration.hasOwnProperty('x')) {
+  //   info = xyz.replace("X", acceleration.x);
+  //   info = info.replace("Y", acceleration.y);
+  //   info = info.replace("Z", acceleration.z);
+  //   // document.getElementById("moAccel").innerHTML = info;
+  // }
 
   // Grab the acceleration including gravity from the results
   var acceleration_gravity = eventData.accelerationIncludingGravity;
@@ -113,7 +139,7 @@ function deviceMotionHandler(eventData) {
 
   // // Grab the refresh interval from the results
   info = eventData.interval;
-  document.getElementById("moInterval").innerHTML = info;
+  // document.getElementById("moInterval").innerHTML = info;
 }
 
 function precise(x,sigfig) {
